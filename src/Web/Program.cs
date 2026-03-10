@@ -11,6 +11,7 @@ builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
 builder.Services.AddControllers();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -81,29 +82,38 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-app.UseExceptionHandler(err =>
-{
-    err.Run(async context =>
-    {
-        context.Response.StatusCode = 500;
-        context.Response.ContentType = "application/json";
-        var ex = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>()?.Error;
-        if (ex is ValidationException validationException)
-        {
-            context.Response.StatusCode = 400;
-            await context.Response.WriteAsync(JsonSerializer.Serialize(new { errorCode = "VALIDATION_ERROR", errors = validationException.Errors }));
-            return;
-        }
-        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Unhandled exception");
-        await context.Response.WriteAsync(JsonSerializer.Serialize(new { errorCode = "SERVER_ERROR", message = "An error occurred." }));
-    });
-});
-
+// Exception handling: hiển thị chi tiết khi chạy Development, còn lại trả JSON chung
 if (app.Environment.IsDevelopment())
 {
+    app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI();
+}
+else
+{
+    app.UseExceptionHandler(err =>
+    {
+        err.Run(async context =>
+        {
+            context.Response.StatusCode = 500;
+            context.Response.ContentType = "application/json";
+            var ex = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>()?.Error;
+            if (ex is ValidationException validationException)
+            {
+                context.Response.StatusCode = 400;
+                await context.Response.WriteAsync(JsonSerializer.Serialize(new { errorCode = "VALIDATION_ERROR", errors = validationException.Errors }));
+                return;
+            }
+
+            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+            logger.LogError(ex, "Unhandled exception");
+            await context.Response.WriteAsync(JsonSerializer.Serialize(new
+            {
+                errorCode = "SERVER_ERROR",
+                message = ex?.Message ?? "An error occurred."
+            }));
+        });
+    });
 }
 
 app.UseHttpsRedirection();

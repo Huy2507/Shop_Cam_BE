@@ -7,6 +7,12 @@ namespace Shop_Cam_BE.Application.Common.Interfaces;
 public interface IApplicationDbContext
 {
     DbSet<User> Users { get; }
+
+    DbSet<ProductCategory> ProductCategories { get; }
+    DbSet<Product> Products { get; }
+    DbSet<HomeBanner> HomeBanners { get; }
+    DbSet<NewsArticle> NewsArticles { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
     Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken);
 }

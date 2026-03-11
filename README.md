@@ -1,6 +1,6 @@
 # Shop Cam Backend (Shop_Cam_BE)
 
-Base backend solution using .NET 8 and a Clean Architecture style layout, inspired by `product-backend` from `Digital_Business_Card`.
+Base backend solution using .NET 8 and a Clean Architecture style layout
 
 ## Structure
 
@@ -19,5 +19,4 @@ cd src/Web
 dotnet run
 ```
 
-Then open `https://localhost:5001` (or the URL shown in the console) to see the Swagger UI.
-
+Then open `https://localhost:62143` (or the URL shown in the console) to see the Swagger UI.

@@ -18,6 +18,8 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<Product> Products { get; set; }
     public DbSet<HomeBanner> HomeBanners { get; set; }
     public DbSet<NewsArticle> NewsArticles { get; set; }
+    public DbSet<Order> Orders { get; set; }
+    public DbSet<OrderItem> OrderItems { get; set; }
 
     public async Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken)
     {
@@ -66,6 +68,43 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
             entity.Property(e => e.Title)
                 .IsRequired()
                 .HasMaxLength(500);
+        });
+
+        modelBuilder.Entity<Order>(entity =>
+        {
+            entity.HasKey(e => e.OrderId);
+            entity.Property(e => e.Code)
+                .IsRequired()
+                .HasMaxLength(50);
+            entity.Property(e => e.CustomerName)
+                .IsRequired()
+                .HasMaxLength(200);
+            entity.Property(e => e.Phone)
+                .IsRequired()
+                .HasMaxLength(50);
+            entity.Property(e => e.Email)
+                .HasMaxLength(200);
+            entity.Property(e => e.Address)
+                .IsRequired()
+                .HasMaxLength(500);
+            entity.Property(e => e.TotalAmount)
+                .HasColumnType("decimal(18,2)");
+        });
+
+        modelBuilder.Entity<OrderItem>(entity =>
+        {
+            entity.HasKey(e => e.OrderItemId);
+            entity.Property(e => e.ProductName)
+                .IsRequired()
+                .HasMaxLength(300);
+            entity.Property(e => e.UnitPrice)
+                .HasColumnType("decimal(18,2)");
+            entity.Property(e => e.LineTotal)
+                .HasColumnType("decimal(18,2)");
+
+            entity.HasOne(e => e.Order)
+                .WithMany(o => o.Items)
+                .HasForeignKey(e => e.OrderId);
         });
     }
 }

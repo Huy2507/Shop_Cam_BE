@@ -14,6 +14,7 @@ public interface IApplicationDbContext
     DbSet<NewsArticle> NewsArticles { get; }
     DbSet<Order> Orders { get; }
     DbSet<OrderItem> OrderItems { get; }
+    DbSet<ProductReview> ProductReviews { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
     Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken);

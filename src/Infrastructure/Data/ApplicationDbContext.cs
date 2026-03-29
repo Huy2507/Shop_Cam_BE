@@ -20,6 +20,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<NewsArticle> NewsArticles { get; set; }
     public DbSet<Order> Orders { get; set; }
     public DbSet<OrderItem> OrderItems { get; set; }
+    public DbSet<ProductReview> ProductReviews { get; set; }
 
     public async Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken)
     {
@@ -52,6 +53,29 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
                 .HasColumnType("decimal(18,2)");
             entity.Property(e => e.Discount)
                 .HasColumnType("decimal(18,2)");
+            entity.Property(e => e.Description)
+                .HasMaxLength(8000);
+            entity.HasOne(e => e.Category)
+                .WithMany(c => c.Products)
+                .HasForeignKey(e => e.ProductCategoryId);
+        });
+
+        modelBuilder.Entity<ProductReview>(entity =>
+        {
+            entity.HasKey(e => e.ProductReviewId);
+            entity.Property(e => e.AuthorName)
+                .IsRequired()
+                .HasMaxLength(100);
+            entity.Property(e => e.Comment)
+                .IsRequired()
+                .HasMaxLength(2000);
+            entity.Property(e => e.Rating)
+                .HasColumnType("tinyint");
+            entity.HasOne(e => e.Product)
+                .WithMany(p => p.Reviews)
+                .HasForeignKey(e => e.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => e.ProductId);
         });
 
         modelBuilder.Entity<HomeBanner>(entity =>
@@ -68,6 +92,8 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
             entity.Property(e => e.Title)
                 .IsRequired()
                 .HasMaxLength(500);
+            entity.Property(e => e.Body)
+                .HasMaxLength(16000);
         });
 
         modelBuilder.Entity<Order>(entity =>

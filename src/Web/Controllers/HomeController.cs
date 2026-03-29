@@ -2,11 +2,18 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shop_Cam_BE.Application.Common.Mappings;
+using Shop_Cam_BE.Application.Features.Home.Commands.CreateProductReview;
 using Shop_Cam_BE.Application.Features.Home.Queries.GetBanners;
+using Shop_Cam_BE.Application.Features.Home.Queries.GetCatalogProducts;
 using Shop_Cam_BE.Application.Features.Home.Queries.GetNewProducts;
 using Shop_Cam_BE.Application.Features.Home.Queries.GetNews;
+using Shop_Cam_BE.Application.Features.Home.Queries.GetNewsById;
+using Shop_Cam_BE.Application.Features.Home.Queries.GetProductById;
 using Shop_Cam_BE.Application.Features.Home.Queries.GetProducts;
 using Shop_Cam_BE.Application.Features.Home.Queries.GetPromoBanners;
+using Shop_Cam_BE.Application.Features.Home.Queries.GetProductReviews;
+using Shop_Cam_BE.Application.Features.Home.Queries.GetRelatedProducts;
 
 namespace Shop_Cam_BE.Web.Controllers;
 
@@ -32,14 +39,7 @@ public class HomeController : ControllerBase
         // Gửi query vào Application layer để lấy dữ liệu.
         var banners = await _mediator.Send(new GetBannersQuery(), cancellationToken);
 
-        // Map entity sang shape FE sử dụng: { id, urlimg, title, link }.
-        return Ok(banners.Select(b => new
-        {
-            id = b.HomeBannerId,
-            urlimg = b.UrlImg,
-            title = b.Title,
-            link = b.Link
-        }));
+        return Ok(banners.Select(HomeStorefrontResponseMapper.FromBanner));
     }
 
     /// <summary>
@@ -52,13 +52,7 @@ public class HomeController : ControllerBase
     {
         var banners = await _mediator.Send(new GetPromoBannersQuery(), cancellationToken);
 
-        return Ok(banners.Select(b => new
-        {
-            id = b.HomeBannerId,
-            urlimg = b.UrlImg,
-            title = b.Title,
-            link = b.Link
-        }));
+        return Ok(banners.Select(HomeStorefrontResponseMapper.FromBanner));
     }
 
     /// <summary>
@@ -73,18 +67,7 @@ public class HomeController : ControllerBase
         // controller chỉ truyền đúng tham số filter xuống.
         var products = await _mediator.Send(new GetProductsQuery { Filter = filter }, cancellationToken);
 
-        return Ok(products.Select(p => new
-        {
-            id = p.ProductId,
-            name = p.Name,
-            price = p.Price,
-            discount = p.Discount ?? 0m,
-            info = p.Info ?? string.Empty,
-            imageUrl = p.ImageUrl,
-            isNew = p.IsNew,
-            outOfStock = p.OutOfStock,
-            badge = p.Badge ?? string.Empty
-        }));
+        return Ok(products.Select(HomeStorefrontResponseMapper.FromProductForHomeList));
     }
 
     /// <summary>
@@ -96,18 +79,7 @@ public class HomeController : ControllerBase
     {
         var products = await _mediator.Send(new GetNewProductsQuery(), cancellationToken);
 
-        return Ok(products.Select(p => new
-        {
-            id = p.ProductId,
-            name = p.Name,
-            price = p.Price,
-            discount = p.Discount,
-            info = p.Info,
-            imageUrl = p.ImageUrl,
-            isNew = p.IsNew,
-            outOfStock = p.OutOfStock,
-            badge = p.Badge
-        }));
+        return Ok(products.Select(HomeStorefrontResponseMapper.FromProductForNewArrivals));
     }
 
     /// <summary>
@@ -119,15 +91,150 @@ public class HomeController : ControllerBase
     {
         var news = await _mediator.Send(new GetNewsQuery(), cancellationToken);
 
-        return Ok(news.Select(n => new
+        return Ok(news.Select(HomeStorefrontResponseMapper.FromNewsArticle));
+    }
+
+    /// <summary>
+    /// Chi tiết một bài tin (PDP tin tức).
+    /// </summary>
+    [HttpGet("news/{id:guid}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetNewsById(Guid id, CancellationToken cancellationToken)
+    {
+        var dto = await _mediator.Send(new GetNewsByIdQuery { NewsArticleId = id }, cancellationToken);
+        if (dto == null) return NotFound();
+        return Ok(HomeStorefrontResponseMapper.FromNewsDetail(dto));
+    }
+
+    /// <summary>
+    /// Chi tiết sản phẩm (PDP).
+    /// </summary>
+    [HttpGet("product/{id:guid}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetProductById(Guid id, CancellationToken cancellationToken)
+    {
+        var p = await _mediator.Send(new GetProductByIdQuery { ProductId = id }, cancellationToken);
+        if (p == null) return NotFound();
+        return Ok(HomeStorefrontResponseMapper.FromProductDetail(p));
+    }
+
+    /// <summary>
+    /// Sản phẩm liên quan (cùng danh mục).
+    /// </summary>
+    [HttpGet("product/{id:guid}/related")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetRelatedProducts(Guid id, CancellationToken cancellationToken)
+    {
+        var list = await _mediator.Send(new GetRelatedProductsQuery { ProductId = id, Take = 5 }, cancellationToken);
+        return Ok(list.Select(HomeStorefrontResponseMapper.FromCatalogProduct));
+    }
+
+    /// <summary>
+    /// Danh mục / tìm kiếm có phân trang (trang Mua hàng online).
+    /// </summary>
+    [HttpGet("catalog")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetCatalog(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 12,
+        [FromQuery] string q = null,
+        [FromQuery] string category = null,
+        [FromQuery] string sort = null,
+        [FromQuery] decimal? minPrice = null,
+        [FromQuery] decimal? maxPrice = null,
+        [FromQuery] string tab = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _mediator.Send(new GetCatalogProductsQuery
         {
-            id = n.NewsArticleId,
-            title = n.Title,
-            imageUrl = n.ImageUrl,
-            excerpt = n.Excerpt ?? string.Empty,
-            link = n.Link,
-            publishedAt = n.PublishedAt
-        }));
+            Search = q,
+            CategoryName = category,
+            Sort = sort,
+            Page = page,
+            PageSize = pageSize,
+            MinPrice = minPrice,
+            MaxPrice = maxPrice,
+            HomeTab = tab
+        }, cancellationToken);
+
+        return Ok(new
+        {
+            items = result.Items.Select(HomeStorefrontResponseMapper.FromCatalogProduct),
+            totalCount = result.TotalCount,
+            page = result.Page,
+            pageSize = result.PageSize,
+            totalPages = result.TotalPages
+        });
+    }
+
+    [HttpGet("product/{id:guid}/reviews")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetProductReviews(
+        Guid id,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _mediator.Send(
+            new GetProductReviewsQuery { ProductId = id, Page = page, PageSize = pageSize },
+            cancellationToken);
+
+        return Ok(new
+        {
+            items = result.Items.Select(r => new
+            {
+                id = r.Id,
+                authorName = r.AuthorName,
+                rating = r.Rating,
+                comment = r.Comment,
+                createdAt = r.CreatedAt,
+            }),
+            totalCount = result.TotalCount,
+            page = result.Page,
+            pageSize = result.PageSize,
+            totalPages = result.TotalPages,
+            averageRating = result.AverageRating,
+        });
+    }
+
+    [HttpPost("product/{id:guid}/reviews")]
+    [AllowAnonymous]
+    public async Task<IActionResult> CreateProductReview(
+        Guid id,
+        [FromBody] CreateProductReviewRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        if (body == null)
+            return BadRequest();
+
+        var result = await _mediator.Send(
+            new CreateProductReviewCommand
+            {
+                ProductId = id,
+                AuthorName = body.AuthorName ?? string.Empty,
+                Rating = body.Rating,
+                Comment = body.Comment ?? string.Empty,
+            },
+            cancellationToken);
+
+        if (!result.Succeeded)
+            return BadRequest(result);
+
+        var v = result.Value!;
+        return Ok(new
+        {
+            id = v.Id,
+            authorName = v.AuthorName,
+            rating = v.Rating,
+            comment = v.Comment,
+            createdAt = v.CreatedAt,
+        });
     }
 }
 
+public class CreateProductReviewRequest
+{
+    public string AuthorName { get; set; }
+    public int Rating { get; set; }
+    public string Comment { get; set; }
+}

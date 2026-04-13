@@ -6,18 +6,6 @@ public class LoginDTO
     public string password { get; set; } = null!;
 }
 
-public class UserInfoDto
-{
-    public string KeycloakId { get; set; } = default!;
-    public string Username { get; set; } = default!;
-    public string Email { get; set; } = default!;
-}
-
-public class LoginResultDto
-{
-    public string Email { get; set; } = string.Empty;
-}
-
 public class TokenResultDto
 {
     public string AccessToken { get; set; } = string.Empty;
@@ -53,8 +41,3 @@ public class ResetPasswordDto
     public string? AccessFrom { get; set; }
 }
 
-public class KeycloakUserWithRoles
-{
-    public Guid UserId { get; set; }
-    public List<string> Roles { get; set; } = new();
-}

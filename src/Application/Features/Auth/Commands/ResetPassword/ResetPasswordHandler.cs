@@ -1,31 +1,36 @@
 using MediatR;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Shop_Cam_BE.Application.Common.Constants;
 using Shop_Cam_BE.Application.Common.Extensions;
 using Shop_Cam_BE.Application.Common.Interfaces;
 using Shop_Cam_BE.Application.Common.Models;
+using Shop_Cam_BE.Domain.Entities;
 using Shop_Cam_BE.Domain.Enums;
 
 namespace Shop_Cam_BE.Application.Features.Auth.Commands.ResetPassword;
 
+/// <summary>
+/// Xác thực OTP Redis, hash mật khẩu mới và xóa key OTP.
+/// </summary>
 public class ResetPasswordHandler : IRequestHandler<ResetPasswordCommand, Result<Unit>>
 {
     private readonly IRedisService _redisService;
-    private readonly IKeycloakService _keycloakService;
+    private readonly IPasswordHasher<User> _passwordHasher;
     private readonly ILogger<ResetPasswordHandler> _logger;
     private readonly IApplicationDbContext _context;
     private readonly IActivityLogService _activityLogService;
 
     public ResetPasswordHandler(
         IRedisService redisService,
-        IKeycloakService keycloakService,
+        IPasswordHasher<User> passwordHasher,
         ILogger<ResetPasswordHandler> logger,
         IApplicationDbContext context,
         IActivityLogService activityLogService)
     {
         _redisService = redisService;
-        _keycloakService = keycloakService;
+        _passwordHasher = passwordHasher;
         _logger = logger;
         _context = context;
         _activityLogService = activityLogService;
@@ -40,7 +45,7 @@ public class ResetPasswordHandler : IRequestHandler<ResetPasswordCommand, Result
         if (dto.NewPassword != dto.ConfirmPassword)
         {
             _logger.LogWarning("Mật khẩu xác nhận không khớp cho {Email}", email);
-            return Result<Unit>.Failure(ErrorCodes.PASSWORD_MISMATCH, "Mật khẩu xác nhận không khớp.");
+            return Result<Unit>.Failure(ErrorCodes.PASSWORD_MISMATCH);
         }
 
         var redisKey = $"otp:forgot:{accessFrom}:{email}";
@@ -49,28 +54,23 @@ public class ResetPasswordHandler : IRequestHandler<ResetPasswordCommand, Result
         if (string.IsNullOrEmpty(savedCode) || savedCode != dto.Code)
         {
             _logger.LogWarning("Mã OTP không hợp lệ hoặc đã hết hạn cho {Email} ({AccessFrom})", email, accessFrom);
-            return Result<Unit>.Failure(ErrorCodes.INVALID_OTP, "Mã xác nhận không hợp lệ hoặc đã hết hạn.");
+            return Result<Unit>.Failure(ErrorCodes.INVALID_OTP);
         }
 
-        var userInfoResult = await _keycloakService.GetUserIdAndRolesByEmailAsync(email);
-        if (!userInfoResult.Succeeded || userInfoResult.Value!.UserId == Guid.Empty)
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
+        if (user == null)
         {
             _logger.LogWarning("Không tìm thấy người dùng với email {Email} ({AccessFrom})", email, accessFrom);
-            return Result<Unit>.Failure(ErrorCodes.USER_NOT_FOUND, "Không tìm thấy người dùng với email này.");
+            return Result<Unit>.Failure(ErrorCodes.USER_NOT_FOUND);
         }
 
-        var updateResult = await _keycloakService.ResetPasswordAsync(userInfoResult.Value!.UserId, dto.NewPassword);
-        if (!updateResult.Succeeded)
-        {
-            _logger.LogError("Đổi mật khẩu thất bại cho {Email} ({AccessFrom})", email, accessFrom);
-            return Result<Unit>.Failure(ErrorCodes.OPERATION_FAILED, "Đổi mật khẩu thất bại. Vui lòng thử lại.");
-        }
+        user.PasswordHash = _passwordHasher.HashPassword(user, dto.NewPassword);
+        user.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync(cancellationToken);
 
         await _redisService.RemoveAsync(redisKey);
 
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.KeycloakId == userInfoResult.Value.UserId, cancellationToken);
-        if (user != null)
-            await _activityLogService.LogUserActionAsync(user.UserId, ActivityAction.ChangePassword);
+        await _activityLogService.LogUserActionAsync(user.UserId, ActivityAction.ChangePassword);
 
         _logger.LogInformation("Đổi mật khẩu thành công cho {Email} ({AccessFrom})", email, accessFrom);
         return Result<Unit>.Success(Unit.Value);

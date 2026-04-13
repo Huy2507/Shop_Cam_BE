@@ -15,6 +15,11 @@ public interface IApplicationDbContext
     DbSet<Order> Orders { get; }
     DbSet<OrderItem> OrderItems { get; }
     DbSet<ProductReview> ProductReviews { get; }
+    DbSet<SiteSetting> SiteSettings { get; }
+    DbSet<Role> Roles { get; }
+    DbSet<UserRole> UserRoles { get; }
+
+    DbSet<UserNewsPagePreference> UserNewsPagePreferences { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
     Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken);

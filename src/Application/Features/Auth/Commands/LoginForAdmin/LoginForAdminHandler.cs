@@ -1,7 +1,5 @@
 using MediatR;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Shop_Cam_BE.Application.Common.Constants;
 using Shop_Cam_BE.Application.Common.Helpers;
@@ -10,32 +8,29 @@ using Shop_Cam_BE.Application.Common.Models;
 using Shop_Cam_BE.Application.DTOs;
 using Shop_Cam_BE.Domain.Entities;
 
-namespace Shop_Cam_BE.Application.Features.Auth.Commands.LoginForDashboard;
+namespace Shop_Cam_BE.Application.Features.Auth.Commands.LoginForAdmin;
 
-/// <summary>Đăng nhập dashboard (storefront): không OTP; JWT cục bộ; quyền theo RoleAccess:dashboard trong DB.</summary>
-public class LoginForDashboardHandler : IRequestHandler<LoginForDashboardCommand, Result<TokenResultDto>>
+/// <summary>Đăng nhập admin: mật khẩu cục bộ + JWT; quyền Admin từ UserRoles.</summary>
+public class LoginForAdminHandler : IRequestHandler<LoginForAdminCommand, Result<TokenResultDto>>
 {
     private readonly IApplicationDbContext _context;
     private readonly IPasswordHasher<User> _passwordHasher;
     private readonly IJwtTokenService _jwt;
-    private readonly IConfiguration _config;
-    private readonly ILogger<LoginForDashboardHandler> _logger;
+    private readonly ILogger<LoginForAdminHandler> _logger;
 
-    public LoginForDashboardHandler(
+    public LoginForAdminHandler(
         IApplicationDbContext context,
         IPasswordHasher<User> passwordHasher,
         IJwtTokenService jwt,
-        IConfiguration config,
-        ILogger<LoginForDashboardHandler> logger)
+        ILogger<LoginForAdminHandler> logger)
     {
         _context = context;
         _passwordHasher = passwordHasher;
         _jwt = jwt;
-        _config = config;
         _logger = logger;
     }
 
-    public async Task<Result<TokenResultDto>> Handle(LoginForDashboardCommand request, CancellationToken cancellationToken)
+    public async Task<Result<TokenResultDto>> Handle(LoginForAdminCommand request, CancellationToken cancellationToken)
     {
         try
         {
@@ -49,11 +44,7 @@ public class LoginForDashboardHandler : IRequestHandler<LoginForDashboardCommand
             if (!user.IsActive)
                 return Result<TokenResultDto>.Failure(ErrorCodes.ACCOUNT_LOCKED);
 
-            var allowed = _config.GetSection("RoleAccess:dashboard").Get<string[]>() ?? Array.Empty<string>();
-            if (allowed.Length == 0)
-                return Result<TokenResultDto>.Failure(ErrorCodes.FORBIDDEN);
-
-            if (!await UserRoleChecker.UserHasAnyRoleNameAsync(_context, user.UserId, allowed, cancellationToken))
+            if (!await UserRoleChecker.UserHasAdminRoleAsync(_context, user.UserId, cancellationToken))
                 return Result<TokenResultDto>.Failure(ErrorCodes.UNAUTHORIZED_ROLE);
 
             var roleNames = await AuthUserQueries.GetRoleNamesAsync(_context, user.UserId, cancellationToken);
@@ -61,7 +52,7 @@ public class LoginForDashboardHandler : IRequestHandler<LoginForDashboardCommand
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Lỗi đăng nhập Dashboard cho {Username}", request.Username);
+            _logger.LogError(ex, "Lỗi đăng nhập Admin cho {Username}", request.Username);
             return Result<TokenResultDto>.Failure(ErrorCodes.SERVER_ERROR);
         }
     }

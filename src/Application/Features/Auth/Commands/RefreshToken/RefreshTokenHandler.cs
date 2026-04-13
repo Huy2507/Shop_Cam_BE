@@ -13,9 +13,12 @@ using Shop_Cam_BE.Domain.Enums;
 
 namespace Shop_Cam_BE.Application.Features.Auth.Commands.RefreshToken;
 
+/// <summary>
+/// Xác thực refresh token, kiểm tra user active và quyền theo accessFrom (admin hoặc RoleAccess).
+/// </summary>
 public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, Result<TokenResultDto>>
 {
-    private readonly IKeycloakService _keycloakService;
+    private readonly IJwtTokenService _jwt;
     private readonly ILogger<RefreshTokenHandler> _logger;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IConfiguration _config;
@@ -23,14 +26,14 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, Result<T
     private readonly IActivityLogService _activityLogService;
 
     public RefreshTokenHandler(
-        IKeycloakService keycloakService,
+        IJwtTokenService jwt,
         ILogger<RefreshTokenHandler> logger,
         IHttpContextAccessor httpContextAccessor,
         IConfiguration config,
         IApplicationDbContext context,
         IActivityLogService activityLogService)
     {
-        _keycloakService = keycloakService;
+        _jwt = jwt;
         _logger = logger;
         _httpContextAccessor = httpContextAccessor;
         _config = config;
@@ -46,41 +49,52 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, Result<T
             if (string.IsNullOrEmpty(refreshToken))
             {
                 _logger.LogWarning("Không tìm thấy refresh token trong cookie");
-                return Result<TokenResultDto>.Failure(ErrorCodes.INVALID_REFRESH_TOKEN, ["Không tìm thấy refresh token. Vui lòng đăng nhập lại."]);
+                return Result<TokenResultDto>.Failure(ErrorCodes.INVALID_REFRESH_TOKEN);
             }
 
-            var result = await _keycloakService.RefreshTokenAsync(refreshToken);
-            if (!result.Succeeded || result.Value == null)
+            if (!_jwt.TryValidateRefreshToken(refreshToken, out var userId))
             {
-                _logger.LogWarning("Làm mới token thất bại: {Message}", string.Join(", ", result.Errors));
-                return Result<TokenResultDto>.Failure(ErrorCodes.REFRESH_TOKEN_FAILED, result.Errors);
+                _logger.LogWarning("Refresh token không hợp lệ hoặc hết hạn");
+                return Result<TokenResultDto>.Failure(ErrorCodes.REFRESH_TOKEN_FAILED);
             }
 
-            var tokenDto = result.Value;
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId, cancellationToken);
+            if (user == null || !user.IsActive)
+                return Result<TokenResultDto>.Failure(ErrorCodes.UNAUTHORIZED_ROLE);
+
             var accessFrom = request.AccessFrom?.ToLower().Trim() ?? "app";
-            var allowedRoles = _config.GetSection($"RoleAccess:{accessFrom}").Get<string[]>() ?? Array.Empty<string>();
-            var hasRole = await _keycloakService.CheckUserHasAnyRoleAsync(tokenDto.AccessToken, allowedRoles);
 
-            if (!hasRole)
+            if (accessFrom == "admin")
             {
-                _logger.LogWarning("Token mới không hợp lệ với quyền truy cập {AccessFrom}", accessFrom);
-                return Result<TokenResultDto>.Failure(ErrorCodes.UNAUTHORIZED_ROLE, ["Bạn không có quyền truy cập hệ thống."]);
+                if (!await UserRoleChecker.UserHasAdminRoleAsync(_context, user.UserId, cancellationToken))
+                {
+                    _logger.LogWarning("Refresh admin: user không có role Admin trong DB.");
+                    return Result<TokenResultDto>.Failure(ErrorCodes.UNAUTHORIZED_ROLE);
+                }
+            }
+            else
+            {
+                var allowedRoles = _config.GetSection($"RoleAccess:{accessFrom}").Get<string[]>() ?? Array.Empty<string>();
+                if (allowedRoles.Length == 0)
+                    return Result<TokenResultDto>.Failure(ErrorCodes.FORBIDDEN);
+
+                if (!await UserRoleChecker.UserHasAnyRoleNameAsync(_context, user.UserId, allowedRoles, cancellationToken))
+                {
+                    _logger.LogWarning("Refresh: token không đủ quyền cho {AccessFrom}", accessFrom);
+                    return Result<TokenResultDto>.Failure(ErrorCodes.UNAUTHORIZED_ROLE);
+                }
             }
 
-            var keycloakIdStr = JwtHelper.ExtractKeycloakIdFromJwt(refreshToken);
-            if (Guid.TryParse(keycloakIdStr, out var keycloakId))
-            {
-                var user = await _context.Users.FirstOrDefaultAsync(x => x.KeycloakId == keycloakId, cancellationToken);
-                if (user != null)
-                    await _activityLogService.LogUserActionAsync(user.UserId, ActivityAction.TokenRefreshed);
-            }
+            var roleNames = await AuthUserQueries.GetRoleNamesAsync(_context, user.UserId, cancellationToken);
+            var pair = _jwt.CreateTokenPair(user, roleNames);
+            await _activityLogService.LogUserActionAsync(user.UserId, ActivityAction.TokenRefreshed);
 
-            return Result<TokenResultDto>.Success(tokenDto);
+            return Result<TokenResultDto>.Success(pair);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Lỗi không xác định khi làm mới token");
-            return Result<TokenResultDto>.Failure(ErrorCodes.SERVER_ERROR, ["Đã xảy ra lỗi hệ thống. Vui lòng đăng nhập lại."]);
+            return Result<TokenResultDto>.Failure(ErrorCodes.SERVER_ERROR);
         }
     }
 }

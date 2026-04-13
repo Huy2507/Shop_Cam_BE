@@ -15,7 +15,12 @@ namespace Shop_Cam_BE.Infrastructure.Data.Migrations
                 {
                     RoleId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
-                    NormalizedName = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false)
+                    NormalizedName = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    CreatedTime = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false, defaultValueSql: "SYSUTCDATETIME()"),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
+                    UpdatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    UpdatedTime = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false, defaultValueSql: "SYSUTCDATETIME()")
                 },
                 constraints: table =>
                 {
@@ -51,6 +56,11 @@ namespace Shop_Cam_BE.Infrastructure.Data.Migrations
                 table: "Roles",
                 column: "NormalizedName",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Roles_IsActive",
+                table: "Roles",
+                column: "IsActive");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserRoles_RoleId",

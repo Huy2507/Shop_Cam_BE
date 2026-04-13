@@ -23,60 +23,7 @@ namespace Shop_Cam_BE.Infrastructure.Data.Migrations
                 type: "uniqueidentifier",
                 nullable: true);
 
-            migrationBuilder.AddColumn<Guid>(
-                name: "CreatedByUserId",
-                table: "Roles",
-                type: "uniqueidentifier",
-                nullable: true);
-
-            migrationBuilder.AddColumn<DateTimeOffset>(
-                name: "CreatedTime",
-                table: "Roles",
-                type: "datetimeoffset",
-                nullable: true);
-
-            migrationBuilder.AddColumn<bool>(
-                name: "IsActive",
-                table: "Roles",
-                type: "bit",
-                nullable: false,
-                defaultValue: true);
-
-            migrationBuilder.AddColumn<Guid>(
-                name: "UpdatedByUserId",
-                table: "Roles",
-                type: "uniqueidentifier",
-                nullable: true);
-
-            migrationBuilder.AddColumn<DateTimeOffset>(
-                name: "UpdatedTime",
-                table: "Roles",
-                type: "datetimeoffset",
-                nullable: true);
-
-            migrationBuilder.Sql(
-                @"UPDATE Roles SET CreatedTime = SYSUTCDATETIME(), UpdatedTime = SYSUTCDATETIME() 
-                  WHERE CreatedTime IS NULL;");
-
-            migrationBuilder.AlterColumn<DateTimeOffset>(
-                name: "CreatedTime",
-                table: "Roles",
-                type: "datetimeoffset",
-                nullable: false,
-                defaultValueSql: "SYSUTCDATETIME()",
-                oldClrType: typeof(DateTimeOffset),
-                oldType: "datetimeoffset",
-                oldNullable: true);
-
-            migrationBuilder.AlterColumn<DateTimeOffset>(
-                name: "UpdatedTime",
-                table: "Roles",
-                type: "datetimeoffset",
-                nullable: false,
-                defaultValueSql: "SYSUTCDATETIME()",
-                oldClrType: typeof(DateTimeOffset),
-                oldType: "datetimeoffset",
-                oldNullable: true);
+            // Bảng Roles + cột audit: migration AddRolesAndUserRoles (sau migration này).
 
             migrationBuilder.AddColumn<Guid>(
                 name: "CreatedByUserId",
@@ -423,11 +370,6 @@ namespace Shop_Cam_BE.Infrastructure.Data.Migrations
                 oldNullable: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Roles_IsActive",
-                table: "Roles",
-                column: "IsActive");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Products_IsActive",
                 table: "Products",
                 column: "IsActive");
@@ -461,10 +403,6 @@ namespace Shop_Cam_BE.Infrastructure.Data.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropIndex(
-                name: "IX_Roles_IsActive",
-                table: "Roles");
-
-            migrationBuilder.DropIndex(
                 name: "IX_Products_IsActive",
                 table: "Products");
 
@@ -495,26 +433,6 @@ namespace Shop_Cam_BE.Infrastructure.Data.Migrations
             migrationBuilder.DropColumn(
                 name: "updated_by_user_id",
                 table: "user");
-
-            migrationBuilder.DropColumn(
-                name: "CreatedByUserId",
-                table: "Roles");
-
-            migrationBuilder.DropColumn(
-                name: "CreatedTime",
-                table: "Roles");
-
-            migrationBuilder.DropColumn(
-                name: "IsActive",
-                table: "Roles");
-
-            migrationBuilder.DropColumn(
-                name: "UpdatedByUserId",
-                table: "Roles");
-
-            migrationBuilder.DropColumn(
-                name: "UpdatedTime",
-                table: "Roles");
 
             migrationBuilder.DropColumn(
                 name: "CreatedByUserId",

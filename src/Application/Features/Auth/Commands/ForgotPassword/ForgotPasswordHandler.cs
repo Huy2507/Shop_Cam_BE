@@ -1,28 +1,33 @@
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Shop_Cam_BE.Application.Common.Constants;
+using Shop_Cam_BE.Application.Common.Helpers;
 using Shop_Cam_BE.Application.Common.Interfaces;
 using Shop_Cam_BE.Application.Common.Models;
 
 namespace Shop_Cam_BE.Application.Features.Auth.Commands.ForgotPassword;
 
+/// <summary>
+/// Sinh OTP, lưu Redis và gửi email khi user tồn tại và có quyền theo RoleAccess:accessFrom.
+/// </summary>
 public class ForgotPasswordHandler : IRequestHandler<ForgotPasswordCommand, Result<Unit>>
 {
-    private readonly IKeycloakService _keycloak;
+    private readonly IApplicationDbContext _context;
     private readonly IEmailService _emailService;
     private readonly IRedisService _redisService;
     private readonly ILogger<ForgotPasswordHandler> _logger;
     private readonly IConfiguration _config;
 
     public ForgotPasswordHandler(
-        IKeycloakService keycloak,
+        IApplicationDbContext context,
         IEmailService emailService,
         IRedisService redisService,
         ILogger<ForgotPasswordHandler> logger,
         IConfiguration config)
     {
-        _keycloak = keycloak;
+        _context = context;
         _emailService = emailService;
         _redisService = redisService;
         _logger = logger;
@@ -33,29 +38,28 @@ public class ForgotPasswordHandler : IRequestHandler<ForgotPasswordCommand, Resu
     {
         try
         {
-            var email = request.Dto.Email;
+            var email = request.Dto.Email.Trim();
             var accessFrom = request.Dto.AccessFrom?.Trim().ToLower() ?? "app";
 
-            var userInfoResult = await _keycloak.GetUserIdAndRolesByEmailAsync(email);
-            if (!userInfoResult.Succeeded || userInfoResult.Value!.UserId == Guid.Empty)
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
+            if (user == null)
             {
-                _logger.LogWarning("Email {Email} không tồn tại trong Keycloak", email);
-                return Result<Unit>.Failure(ErrorCodes.USER_NOT_FOUND, ["Email không tồn tại trong hệ thống."]);
+                _logger.LogWarning("Email {Email} không tồn tại trong DB", email);
+                return Result<Unit>.Failure(ErrorCodes.USER_NOT_FOUND);
             }
 
-            var userRoles = userInfoResult.Value.Roles.Select(r => r.ToLower()).ToHashSet();
-            var allowedRoles = _config.GetSection($"RoleAccess:{accessFrom}").Get<List<string>>()?.Select(r => r.ToLower()).ToHashSet();
-
-            if (allowedRoles == null || allowedRoles.Count == 0)
+            var allowedRoles = _config.GetSection($"RoleAccess:{accessFrom}").Get<string[]>() ?? Array.Empty<string>();
+            if (allowedRoles.Length == 0)
             {
                 _logger.LogWarning("Không tìm thấy cấu hình RoleAccess cho accessFrom={AccessFrom}", accessFrom);
-                return Result<Unit>.Failure(ErrorCodes.FORBIDDEN, ["Cấu hình quyền truy cập không hợp lệ."]);
+                return Result<Unit>.Failure(ErrorCodes.FORBIDDEN);
             }
 
-            if (!userRoles.Overlaps(allowedRoles))
+            if (!await UserRoleChecker.UserHasAnyRoleNameAsync(_context, user.UserId, allowedRoles, cancellationToken))
             {
                 _logger.LogWarning("Email {Email} không có quyền truy cập {AccessFrom}", email, accessFrom);
-                return Result<Unit>.Failure(ErrorCodes.UNAUTHORIZED_ROLE, ["Bạn không có quyền sử dụng chức năng này."]);
+                return Result<Unit>.Failure(ErrorCodes.UNAUTHORIZED_ROLE);
             }
 
             var otp = new Random().Next(100000, 999999).ToString();
@@ -86,7 +90,7 @@ public class ForgotPasswordHandler : IRequestHandler<ForgotPasswordCommand, Resu
         catch (Exception ex)
         {
             _logger.LogError(ex, "Lỗi trong ForgotPasswordHandler cho {Email}", request.Dto.Email);
-            return Result<Unit>.Failure(ErrorCodes.SERVER_ERROR, ["Đã xảy ra lỗi hệ thống, vui lòng thử lại sau."]);
+            return Result<Unit>.Failure(ErrorCodes.SERVER_ERROR);
         }
     }
 }

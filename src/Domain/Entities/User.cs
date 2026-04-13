@@ -1,11 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
 namespace Shop_Cam_BE.Domain.Entities;
 
 [Table("user")]
-[Index("KeycloakId", Name = "user_keycloak_id_key", IsUnique = true)]
 public partial class User
 {
     [Key]
@@ -32,8 +30,9 @@ public partial class User
     [StringLength(20)]
     public string? Phone { get; set; }
 
-    [Column("keycloak_id")]
-    public Guid? KeycloakId { get; set; }
+    /// <summary>Hash mật khẩu (ASP.NET Identity PasswordHasher). Null = chưa đặt mật khẩu cục bộ.</summary>
+    [Column("password_hash")]
+    public string? PasswordHash { get; set; }
 
     [Column("is_active")]
     public bool IsActive { get; set; } = true;
@@ -43,4 +42,14 @@ public partial class User
 
     [Column("updated_at")]
     public DateTime? UpdatedAt { get; set; }
+
+    /// <summary>Người tạo bản ghi (nullable nếu import/seed).</summary>
+    [Column("created_by_user_id")]
+    public Guid? CreatedByUserId { get; set; }
+
+    /// <summary>Người cập nhật gần nhất.</summary>
+    [Column("updated_by_user_id")]
+    public Guid? UpdatedByUserId { get; set; }
+
+    public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
 }

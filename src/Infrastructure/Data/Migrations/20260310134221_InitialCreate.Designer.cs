@@ -15,7 +15,6 @@ namespace Shop_Cam_BE.Infrastructure.Data.Migrations
     [Migration("20260310134221_InitialCreate")]
     partial class InitialCreate
     {
-        /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618

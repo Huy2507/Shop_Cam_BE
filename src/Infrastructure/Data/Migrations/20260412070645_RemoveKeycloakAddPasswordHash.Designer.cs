@@ -12,8 +12,8 @@ using Shop_Cam_BE.Infrastructure.Data;
 namespace Shop_Cam_BE.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260322123503_AddProductDescriptionAndNewsBody")]
-    partial class AddProductDescriptionAndNewsBody
+    [Migration("20260412070645_RemoveKeycloakAddPasswordHash")]
+    partial class RemoveKeycloakAddPasswordHash
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -228,6 +228,105 @@ namespace Shop_Cam_BE.Infrastructure.Data.Migrations
                     b.ToTable("ProductCategories");
                 });
 
+            modelBuilder.Entity("Shop_Cam_BE.Domain.Entities.ProductReview", b =>
+                {
+                    b.Property<Guid>("ProductReviewId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AuthorName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Comment")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsApproved")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte>("Rating")
+                        .HasColumnType("tinyint");
+
+                    b.HasKey("ProductReviewId");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("ProductReviews");
+                });
+
+            modelBuilder.Entity("Shop_Cam_BE.Domain.Entities.Role", b =>
+                {
+                    b.Property<Guid>("RoleId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.HasKey("RoleId");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique();
+
+                    b.ToTable("Roles", (string)null);
+                });
+
+            modelBuilder.Entity("Shop_Cam_BE.Domain.Entities.SiteSetting", b =>
+                {
+                    b.Property<Guid>("SiteSettingId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Group")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ValueJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("SiteSettingId");
+
+                    b.HasIndex("UpdatedByUserId");
+
+                    b.HasIndex("Group", "Key")
+                        .IsUnique();
+
+                    b.ToTable("SiteSettings");
+                });
+
             modelBuilder.Entity("Shop_Cam_BE.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("UserId")
@@ -255,15 +354,15 @@ namespace Shop_Cam_BE.Infrastructure.Data.Migrations
                         .HasColumnType("bit")
                         .HasColumnName("is_active");
 
-                    b.Property<Guid?>("KeycloakId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("keycloak_id");
-
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("last_name");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("password_hash");
 
                     b.Property<string>("Phone")
                         .HasMaxLength(20)
@@ -282,15 +381,22 @@ namespace Shop_Cam_BE.Infrastructure.Data.Migrations
 
                     b.HasKey("UserId");
 
-                    b.HasIndex("KeycloakId")
-                        .IsUnique()
-                        .HasFilter("[keycloak_id] IS NOT NULL");
-
-                    b.HasIndex(new[] { "KeycloakId" }, "user_keycloak_id_key")
-                        .IsUnique()
-                        .HasFilter("[keycloak_id] IS NOT NULL");
-
                     b.ToTable("user");
+                });
+
+            modelBuilder.Entity("Shop_Cam_BE.Domain.Entities.UserRole", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("UserRoles", (string)null);
                 });
 
             modelBuilder.Entity("Shop_Cam_BE.Domain.Entities.OrderItem", b =>
@@ -313,14 +419,69 @@ namespace Shop_Cam_BE.Infrastructure.Data.Migrations
                     b.Navigation("Category");
                 });
 
+            modelBuilder.Entity("Shop_Cam_BE.Domain.Entities.ProductReview", b =>
+                {
+                    b.HasOne("Shop_Cam_BE.Domain.Entities.Product", "Product")
+                        .WithMany("Reviews")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("Shop_Cam_BE.Domain.Entities.SiteSetting", b =>
+                {
+                    b.HasOne("Shop_Cam_BE.Domain.Entities.User", "UpdatedByUser")
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("UpdatedByUser");
+                });
+
+            modelBuilder.Entity("Shop_Cam_BE.Domain.Entities.UserRole", b =>
+                {
+                    b.HasOne("Shop_Cam_BE.Domain.Entities.Role", "Role")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Shop_Cam_BE.Domain.Entities.User", "User")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Shop_Cam_BE.Domain.Entities.Order", b =>
                 {
                     b.Navigation("Items");
                 });
 
+            modelBuilder.Entity("Shop_Cam_BE.Domain.Entities.Product", b =>
+                {
+                    b.Navigation("Reviews");
+                });
+
             modelBuilder.Entity("Shop_Cam_BE.Domain.Entities.ProductCategory", b =>
                 {
                     b.Navigation("Products");
+                });
+
+            modelBuilder.Entity("Shop_Cam_BE.Domain.Entities.Role", b =>
+                {
+                    b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("Shop_Cam_BE.Domain.Entities.User", b =>
+                {
+                    b.Navigation("UserRoles");
                 });
 #pragma warning restore 612, 618
         }

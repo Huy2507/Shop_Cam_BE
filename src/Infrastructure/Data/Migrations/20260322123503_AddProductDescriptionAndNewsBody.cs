@@ -4,10 +4,8 @@
 
 namespace Shop_Cam_BE.Infrastructure.Data.Migrations
 {
-    /// <inheritdoc />
     public partial class AddProductDescriptionAndNewsBody : Migration
     {
-        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<string>(
@@ -25,7 +23,6 @@ namespace Shop_Cam_BE.Infrastructure.Data.Migrations
                 nullable: true);
         }
 
-        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(

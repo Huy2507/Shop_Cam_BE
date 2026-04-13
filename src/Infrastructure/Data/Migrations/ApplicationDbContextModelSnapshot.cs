@@ -28,8 +28,17 @@ namespace Shop_Cam_BE.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedTime")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("IsMain")
                         .HasColumnType("bit");
@@ -40,12 +49,20 @@ namespace Shop_Cam_BE.Infrastructure.Data.Migrations
                     b.Property<string>("Title")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("UpdatedTime")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<string>("UrlImg")
                         .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
                     b.HasKey("HomeBannerId");
+
+                    b.HasIndex("IsActive");
 
                     b.ToTable("HomeBanners");
                 });
@@ -60,12 +77,21 @@ namespace Shop_Cam_BE.Infrastructure.Data.Migrations
                         .HasMaxLength(16000)
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedTime")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<string>("Excerpt")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ImageUrl")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Link")
                         .HasColumnType("nvarchar(max)");
@@ -78,7 +104,15 @@ namespace Shop_Cam_BE.Infrastructure.Data.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("UpdatedTime")
+                        .HasColumnType("datetimeoffset");
+
                     b.HasKey("NewsArticleId");
+
+                    b.HasIndex("IsActive");
 
                     b.ToTable("NewsArticles");
                 });
@@ -99,8 +133,11 @@ namespace Shop_Cam_BE.Infrastructure.Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedTime")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<string>("CustomerName")
                         .IsRequired()
@@ -110,6 +147,9 @@ namespace Shop_Cam_BE.Infrastructure.Data.Migrations
                     b.Property<string>("Email")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Note")
                         .HasColumnType("nvarchar(max)");
@@ -122,7 +162,15 @@ namespace Shop_Cam_BE.Infrastructure.Data.Migrations
                     b.Property<decimal>("TotalAmount")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("UpdatedTime")
+                        .HasColumnType("datetimeoffset");
+
                     b.HasKey("OrderId");
+
+                    b.HasIndex("IsActive");
 
                     b.ToTable("Orders");
                 });
@@ -169,6 +217,12 @@ namespace Shop_Cam_BE.Infrastructure.Data.Migrations
                     b.Property<string>("Badge")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedTime")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<string>("Description")
                         .HasMaxLength(8000)
                         .HasColumnType("nvarchar(max)");
@@ -182,6 +236,9 @@ namespace Shop_Cam_BE.Infrastructure.Data.Migrations
 
                     b.Property<string>("Info")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("IsNew")
                         .HasColumnType("bit");
@@ -200,7 +257,15 @@ namespace Shop_Cam_BE.Infrastructure.Data.Migrations
                     b.Property<Guid?>("ProductCategoryId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("UpdatedTime")
+                        .HasColumnType("datetimeoffset");
+
                     b.HasKey("ProductId");
+
+                    b.HasIndex("IsActive");
 
                     b.HasIndex("ProductCategoryId");
 
@@ -213,6 +278,15 @@ namespace Shop_Cam_BE.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedTime")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -221,7 +295,15 @@ namespace Shop_Cam_BE.Infrastructure.Data.Migrations
                     b.Property<string>("Slug")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("UpdatedTime")
+                        .HasColumnType("datetimeoffset");
+
                     b.HasKey("ProductCategoryId");
+
+                    b.HasIndex("IsActive");
 
                     b.ToTable("ProductCategories");
                 });
@@ -242,8 +324,14 @@ namespace Shop_Cam_BE.Infrastructure.Data.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedTime")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("IsApproved")
                         .HasColumnType("bit");
@@ -254,11 +342,111 @@ namespace Shop_Cam_BE.Infrastructure.Data.Migrations
                     b.Property<byte>("Rating")
                         .HasColumnType("tinyint");
 
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("UpdatedTime")
+                        .HasColumnType("datetimeoffset");
+
                     b.HasKey("ProductReviewId");
+
+                    b.HasIndex("IsActive");
 
                     b.HasIndex("ProductId");
 
                     b.ToTable("ProductReviews");
+                });
+
+            modelBuilder.Entity("Shop_Cam_BE.Domain.Entities.Role", b =>
+                {
+                    b.Property<Guid>("RoleId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedTime")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("UpdatedTime")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("RoleId");
+
+                    b.HasIndex("IsActive");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique();
+
+                    b.ToTable("Roles", (string)null);
+                });
+
+            modelBuilder.Entity("Shop_Cam_BE.Domain.Entities.SiteSetting", b =>
+                {
+                    b.Property<Guid>("SiteSettingId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedTime")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Group")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("UpdatedTime")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ValueJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("SiteSettingId");
+
+                    b.HasIndex("IsActive");
+
+                    b.HasIndex("UpdatedByUserId");
+
+                    b.HasIndex("Group", "Key")
+                        .IsUnique();
+
+                    b.ToTable("SiteSettings");
                 });
 
             modelBuilder.Entity("Shop_Cam_BE.Domain.Entities.User", b =>
@@ -271,6 +459,10 @@ namespace Shop_Cam_BE.Infrastructure.Data.Migrations
                     b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("datetime2")
                         .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by_user_id");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -288,15 +480,15 @@ namespace Shop_Cam_BE.Infrastructure.Data.Migrations
                         .HasColumnType("bit")
                         .HasColumnName("is_active");
 
-                    b.Property<Guid?>("KeycloakId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("keycloak_id");
-
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("last_name");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("password_hash");
 
                     b.Property<string>("Phone")
                         .HasMaxLength(20)
@@ -307,6 +499,10 @@ namespace Shop_Cam_BE.Infrastructure.Data.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("updated_at");
 
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by_user_id");
+
                     b.Property<string>("UserName")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -315,15 +511,46 @@ namespace Shop_Cam_BE.Infrastructure.Data.Migrations
 
                     b.HasKey("UserId");
 
-                    b.HasIndex("KeycloakId")
-                        .IsUnique()
-                        .HasFilter("[keycloak_id] IS NOT NULL");
-
-                    b.HasIndex(new[] { "KeycloakId" }, "user_keycloak_id_key")
-                        .IsUnique()
-                        .HasFilter("[keycloak_id] IS NOT NULL");
-
                     b.ToTable("user");
+                });
+
+            modelBuilder.Entity("Shop_Cam_BE.Domain.Entities.UserNewsPagePreference", b =>
+                {
+                    b.Property<Guid>("UserNewsPagePreferenceId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ValueJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("UserNewsPagePreferenceId");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("UserNewsPagePreferences");
+                });
+
+            modelBuilder.Entity("Shop_Cam_BE.Domain.Entities.UserRole", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("UserRoles", (string)null);
                 });
 
             modelBuilder.Entity("Shop_Cam_BE.Domain.Entities.OrderItem", b =>
@@ -357,6 +584,46 @@ namespace Shop_Cam_BE.Infrastructure.Data.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("Shop_Cam_BE.Domain.Entities.SiteSetting", b =>
+                {
+                    b.HasOne("Shop_Cam_BE.Domain.Entities.User", "UpdatedByUser")
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("UpdatedByUser");
+                });
+
+            modelBuilder.Entity("Shop_Cam_BE.Domain.Entities.UserNewsPagePreference", b =>
+                {
+                    b.HasOne("Shop_Cam_BE.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Shop_Cam_BE.Domain.Entities.UserRole", b =>
+                {
+                    b.HasOne("Shop_Cam_BE.Domain.Entities.Role", "Role")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Shop_Cam_BE.Domain.Entities.User", "User")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Shop_Cam_BE.Domain.Entities.Order", b =>
                 {
                     b.Navigation("Items");
@@ -370,6 +637,16 @@ namespace Shop_Cam_BE.Infrastructure.Data.Migrations
             modelBuilder.Entity("Shop_Cam_BE.Domain.Entities.ProductCategory", b =>
                 {
                     b.Navigation("Products");
+                });
+
+            modelBuilder.Entity("Shop_Cam_BE.Domain.Entities.Role", b =>
+                {
+                    b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("Shop_Cam_BE.Domain.Entities.User", b =>
+                {
+                    b.Navigation("UserRoles");
                 });
 #pragma warning restore 612, 618
         }

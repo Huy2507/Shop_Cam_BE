@@ -6,6 +6,14 @@ namespace Shop_Cam_BE.Application.Common.Mappings;
 /// <summary>Map entity/DTO sang JSON camelCase cho HomeController.</summary>
 public static class HomeStorefrontResponseMapper
 {
+    /// <summary>Danh mục menu → JSON.</summary>
+    public static object FromCategory(ProductCategory c) => new
+    {
+        id = c.ProductCategoryId,
+        name = c.Name,
+        slug = c.Slug
+    };
+
     /// <summary>Banner → JSON.</summary>
     public static object FromBanner(HomeBanner b) => new
     {

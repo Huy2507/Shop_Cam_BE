@@ -29,7 +29,7 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Res
 
         if (dto.Items == null || dto.Items.Count == 0)
         {
-            return Result<CreateOrderResultDto>.Failure(ErrorCodes.INVALID_DATA, "Đơn hàng phải có ít nhất 1 sản phẩm.");
+            return Result<CreateOrderResultDto>.Failure(ErrorCodes.ORDER_REQUIRES_ITEMS);
         }
 
         // Lấy danh sách productId duy nhất từ request.
@@ -39,12 +39,12 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Res
             .ToList();
 
         var products = await _context.Products
-            .Where(p => productIds.Contains(p.ProductId))
+            .Where(p => productIds.Contains(p.ProductId) && p.IsActive)
             .ToListAsync(cancellationToken);
 
         if (products.Count != productIds.Count)
         {
-            return Result<CreateOrderResultDto>.Failure(ErrorCodes.NOT_FOUND, "Một hoặc nhiều sản phẩm không tồn tại.");
+            return Result<CreateOrderResultDto>.Failure(ErrorCodes.ORDER_PRODUCTS_NOT_FOUND);
         }
 
         // Tính toán chi tiết đơn hàng.
@@ -83,7 +83,6 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Res
             Address = dto.Address.Trim(),
             Note = dto.Note?.Trim(),
             TotalAmount = totalAmount,
-            CreatedAt = DateTime.UtcNow,
             Items = orderItems
         };
 

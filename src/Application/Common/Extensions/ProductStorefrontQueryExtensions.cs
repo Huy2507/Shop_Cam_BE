@@ -6,9 +6,14 @@ namespace Shop_Cam_BE.Application.Common.Extensions;
 /// <summary>Filter, sort và projection Product cho Home/catalog (EF-translatable).</summary>
 public static class ProductStorefrontQueryExtensions
 {
+    /// <summary>Chỉ sản phẩm chưa xóa mềm (storefront).</summary>
+    public static IQueryable<Product> WhereStorefrontActive(this IQueryable<Product> query) =>
+        query.Where(p => p.IsActive);
+
     /// <summary>hot = có discount; combo = Skip(2); còn lại không lọc thêm.</summary>
     public static IQueryable<Product> ApplyStorefrontHomeTabOrFilter(this IQueryable<Product> query, string? tabOrFilter)
     {
+        query = query.WhereStorefrontActive();
         var key = tabOrFilter?.Trim().ToLowerInvariant();
         if (key == "hot")
             return query.Where(p => p.Discount != null && p.Discount > 0);
@@ -23,7 +28,7 @@ public static class ProductStorefrontQueryExtensions
         if (string.IsNullOrWhiteSpace(categoryName))
             return query;
         var cat = categoryName.Trim();
-        return query.Where(p => p.Category != null && p.Category.Name == cat);
+        return query.Where(p => p.Category != null && p.Category.IsActive && p.Category.Name == cat);
     }
 
     /// <summary>Tìm theo tên (Contains).</summary>

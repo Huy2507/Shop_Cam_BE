@@ -21,6 +21,7 @@ public class GetRelatedProductsQueryHandler : IRequestHandler<GetRelatedProducts
         var take = Math.Clamp(request.Take, 1, 12);
         var current = await _context.Products
             .AsNoTracking()
+            .WhereStorefrontActive()
             .FirstOrDefaultAsync(p => p.ProductId == request.ProductId, cancellationToken);
 
         if (current?.ProductCategoryId == null)
@@ -30,6 +31,7 @@ public class GetRelatedProductsQueryHandler : IRequestHandler<GetRelatedProducts
 
         return await _context.Products
             .AsNoTracking()
+            .WhereStorefrontActive()
             .Where(p => p.ProductCategoryId == catId && p.ProductId != request.ProductId)
             .OrderByDescending(p => p.IsNew)
             .ThenByDescending(p => p.ProductId)

@@ -3,6 +3,9 @@ using Shop_Cam_BE.Application.DTOs;
 
 namespace Shop_Cam_BE.Application.Features.Home.Queries.GetProductReviews;
 
+/// <summary>
+/// Đánh giá đã duyệt của một sản phẩm, có phân trang.
+/// </summary>
 public class GetProductReviewsQuery : IRequest<ProductReviewsResult>
 {
     public Guid ProductId { get; set; }

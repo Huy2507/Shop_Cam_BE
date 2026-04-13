@@ -6,6 +6,7 @@ using Shop_Cam_BE.Application.Common.Mappings;
 using Shop_Cam_BE.Application.Features.Home.Commands.CreateProductReview;
 using Shop_Cam_BE.Application.Features.Home.Queries.GetBanners;
 using Shop_Cam_BE.Application.Features.Home.Queries.GetCatalogProducts;
+using Shop_Cam_BE.Application.Features.Home.Queries.GetCategories;
 using Shop_Cam_BE.Application.Features.Home.Queries.GetNewProducts;
 using Shop_Cam_BE.Application.Features.Home.Queries.GetNews;
 using Shop_Cam_BE.Application.Features.Home.Queries.GetNewsById;
@@ -14,6 +15,7 @@ using Shop_Cam_BE.Application.Features.Home.Queries.GetProducts;
 using Shop_Cam_BE.Application.Features.Home.Queries.GetPromoBanners;
 using Shop_Cam_BE.Application.Features.Home.Queries.GetProductReviews;
 using Shop_Cam_BE.Application.Features.Home.Queries.GetRelatedProducts;
+using Shop_Cam_BE.Application.Features.SiteSettings.Queries.GetPublicUiSettings;
 
 namespace Shop_Cam_BE.Web.Controllers;
 
@@ -26,6 +28,17 @@ public class HomeController : ControllerBase
     public HomeController(IMediator mediator)
     {
         _mediator = mediator;
+    }
+
+    /// <summary>
+    /// Lấy danh mục để hiển thị menu storefront.
+    /// </summary>
+    [HttpGet("categories")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetCategories(CancellationToken cancellationToken)
+    {
+        var categories = await _mediator.Send(new GetCategoriesQuery(), cancellationToken);
+        return Ok(categories.Select(HomeStorefrontResponseMapper.FromCategory));
     }
 
     /// <summary>
@@ -87,11 +100,23 @@ public class HomeController : ControllerBase
     /// </summary>
     [HttpGet("news")]
     [AllowAnonymous]
-    public async Task<IActionResult> GetNews(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetNews(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken cancellationToken = default)
     {
-        var news = await _mediator.Send(new GetNewsQuery(), cancellationToken);
+        var result = await _mediator.Send(
+            new GetNewsQuery { Page = page, PageSize = pageSize },
+            cancellationToken);
 
-        return Ok(news.Select(HomeStorefrontResponseMapper.FromNewsArticle));
+        return Ok(new
+        {
+            items = result.Items.Select(HomeStorefrontResponseMapper.FromNewsArticle),
+            totalCount = result.TotalCount,
+            page = result.Page,
+            pageSize = result.PageSize,
+            totalPages = result.TotalPages,
+        });
     }
 
     /// <summary>
@@ -229,6 +254,17 @@ public class HomeController : ControllerBase
             comment = v.Comment,
             createdAt = v.CreatedAt,
         });
+    }
+
+    /// <summary>
+    /// Cấu hình giao diện + Zalo (OA, link dự phòng, lời chào) — storefront áp dụng; không cần đăng nhập.
+    /// </summary>
+    [HttpGet("ui-config")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetUiConfig(CancellationToken cancellationToken)
+    {
+        var dto = await _mediator.Send(new GetPublicUiSettingsQuery(), cancellationToken);
+        return Ok(dto);
     }
 }
 

@@ -1,0 +1,12 @@
+{
+  "Jwt": {
+    "SigningKey": "i6NmHJLHgpJo1jLswIP6JpCD/j8sDWdZ3mV4t6yyv7k=",
+    "Issuer": "ShopCam",
+    "Audience": "ShopCam",
+    "AccessTokenMinutes": "480",
+    "RefreshTokenDays": "30"
+  },
+  "RoleAccess": {
+    "dashboard": [ "Admin" ]
+  }
+}

@@ -20,7 +20,7 @@ public class GetProductByIdQueryHandler : IRequestHandler<GetProductByIdQuery, P
     {
         return await _context.Products
             .AsNoTracking()
-            .Where(x => x.ProductId == request.ProductId)
+            .Where(x => x.ProductId == request.ProductId && x.IsActive)
             .SelectAsProductDetailDto()
             .FirstOrDefaultAsync(cancellationToken);
     }

@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Shop_Cam_BE.Application.Common.Extensions;
 using Shop_Cam_BE.Application.Common.Interfaces;
 using Shop_Cam_BE.Domain.Entities;
 
@@ -21,6 +22,7 @@ public class GetNewProductsQueryHandler : IRequestHandler<GetNewProductsQuery, L
     {
         // Lọc theo flag IsNew, giới hạn số lượng để hiển thị gọn gàng.
         return await _context.Products
+            .WhereStorefrontActive()
             .Where(p => p.IsNew)
             .Take(20)
             .ToListAsync(cancellationToken);

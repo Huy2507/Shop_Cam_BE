@@ -23,6 +23,7 @@ public class GetBannersQueryHandler : IRequestHandler<GetBannersQuery, List<Home
         // Lấy toàn bộ banner, sắp xếp theo thứ tự hiển thị.
         // Phần map sang DTO/ẩn bớt field sẽ được thực hiện ở Web layer.
         return await _context.HomeBanners
+            .Where(b => b.IsActive)
             .OrderBy(b => b.DisplayOrder)
             .ToListAsync(cancellationToken);
     }

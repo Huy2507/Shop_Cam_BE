@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Shop_Cam_BE.Application.Common.Interfaces;
 using Shop_Cam_BE.Domain.Entities;
 using System.Security.Claims;
@@ -9,21 +10,21 @@ public static class HttpContextExtensions
 {
     public static Guid? GetCurrentUserId(this HttpContext httpContext, IApplicationDbContext context)
     {
-        var keycloakId = httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
-        if (keycloakId != null && Guid.TryParse(keycloakId.Value, out var keycId))
-        {
-            return context.Users.FirstOrDefault(x => x.KeycloakId == keycId)?.UserId;
-        }
-        return null;
+        var sub = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            ?? httpContext.User.FindFirst("sub")?.Value;
+        if (sub == null || !Guid.TryParse(sub, out var userId))
+            return null;
+
+        return context.Users.AsNoTracking().Any(u => u.UserId == userId) ? userId : null;
     }
 
     public static User? GetCurrentUser(this HttpContext httpContext, IApplicationDbContext context)
     {
-        var keycloakId = httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
-        if (keycloakId != null && Guid.TryParse(keycloakId.Value, out var keycId))
-        {
-            return context.Users.FirstOrDefault(x => x.KeycloakId == keycId);
-        }
-        return null;
+        var sub = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            ?? httpContext.User.FindFirst("sub")?.Value;
+        if (sub == null || !Guid.TryParse(sub, out var userId))
+            return null;
+
+        return context.Users.FirstOrDefault(x => x.UserId == userId);
     }
 }

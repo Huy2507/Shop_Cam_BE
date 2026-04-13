@@ -22,7 +22,7 @@ public class GetPromoBannersQueryHandler : IRequestHandler<GetPromoBannersQuery,
         // Chỉ lấy các banner không phải banner chính (IsMain = false),
         // dùng cho vùng khuyến mãi bên phải trên trang chủ.
         return await _context.HomeBanners
-            .Where(b => !b.IsMain)
+            .Where(b => b.IsActive && !b.IsMain)
             .OrderBy(b => b.DisplayOrder)
             .ToListAsync(cancellationToken);
     }

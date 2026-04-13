@@ -5,6 +5,9 @@ using Shop_Cam_BE.Application.DTOs;
 
 namespace Shop_Cam_BE.Application.Features.Home.Queries.GetNewsById;
 
+/// <summary>
+/// Map NewsArticles sang NewsDetailDto.
+/// </summary>
 public class GetNewsByIdQueryHandler : IRequestHandler<GetNewsByIdQuery, NewsDetailDto?>
 {
     private readonly IApplicationDbContext _context;
@@ -18,7 +21,9 @@ public class GetNewsByIdQueryHandler : IRequestHandler<GetNewsByIdQuery, NewsDet
     {
         var n = await _context.NewsArticles
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.NewsArticleId == request.NewsArticleId, cancellationToken);
+            .FirstOrDefaultAsync(
+                x => x.NewsArticleId == request.NewsArticleId && x.IsActive,
+                cancellationToken);
 
         if (n == null) return null;
 

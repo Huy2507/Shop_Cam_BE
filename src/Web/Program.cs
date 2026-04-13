@@ -1,16 +1,24 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.OpenApi.Models;
 using Shop_Cam_BE.Application.Common.Exceptions;
+using Shop_Cam_BE.Infrastructure.Authentication;
+using Shop_Cam_BE.Web.Authorization;
 using System.Security.Claims;
 using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Configuration.AddJsonFile("websettings.json", optional: true, reloadOnChange: true);
+
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(o =>
+{
+    o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    o.JsonSerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
+});
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -34,28 +42,10 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-var keycloakSection = builder.Configuration.GetSection("Keycloak");
-var baseUrl = keycloakSection["BaseUrl"]?.TrimEnd('/');
-var realm = keycloakSection["Realm"];
-var authority = $"{baseUrl}/realms/{realm}";
-
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.Authority = authority;
-        options.Audience = keycloakSection["ClientId"];
-        options.RequireHttpsMetadata = false;
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = authority,
-            ValidAudience = keycloakSection["ClientId"],
-            NameClaimType = "preferred_username",
-            RoleClaimType = ClaimTypes.Role
-        };
+        options.TokenValidationParameters = JwtConfiguration.CreateTokenValidationParameters(builder.Configuration);
         options.Events = new JwtBearerEvents
         {
             OnMessageReceived = context =>
@@ -67,7 +57,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             }
         };
     });
-builder.Services.AddAuthorization();
+
+builder.Services.AddScoped<IAuthorizationHandler, AdminRoleAuthorizationHandler>();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("Admin", policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.Requirements.Add(new AdminRoleRequirement());
+    });
+});
 
 builder.Services.AddCors(options =>
 {

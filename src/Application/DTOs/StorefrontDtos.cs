@@ -1,3 +1,5 @@
+using Shop_Cam_BE.Domain.Entities;
+
 namespace Shop_Cam_BE.Application.DTOs;
 
 /// <summary>Chi tiết sản phẩm cho trang PDP.</summary>
@@ -50,6 +52,16 @@ public class NewsDetailDto
     public string? Excerpt { get; set; }
     public string? Body { get; set; }
     public DateTime PublishedAt { get; set; }
+}
+
+/// <summary>Danh sách tin phân trang (GET /api/home/news).</summary>
+public class NewsFeedResult
+{
+    public List<NewsArticle> Items { get; set; } = new();
+    public int TotalCount { get; set; }
+    public int Page { get; set; }
+    public int PageSize { get; set; }
+    public int TotalPages => PageSize <= 0 ? 0 : (int)Math.Ceiling(TotalCount / (double)PageSize);
 }
 
 /// <summary>Một đánh giá hiển thị trên PDP.</summary>

@@ -1,9 +1,11 @@
+﻿using Shop_Cam_BE.Domain.Common;
+
 namespace Shop_Cam_BE.Domain.Entities;
 
 /// <summary>
 /// Đơn hàng đơn giản lưu lại thông tin khách đặt hàng từ FE.
 /// </summary>
-public class Order
+public class Order : IAuditableSoftDeletable
 {
     public Guid OrderId { get; set; }
 
@@ -21,8 +23,11 @@ public class Order
 
     public decimal TotalAmount { get; set; }
 
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
     public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
-}
 
+    public DateTimeOffset CreatedTime { get; set; }
+    public Guid? CreatedByUserId { get; set; }
+    public DateTimeOffset UpdatedTime { get; set; }
+    public Guid? UpdatedByUserId { get; set; }
+    public bool IsActive { get; set; } = true;
+}

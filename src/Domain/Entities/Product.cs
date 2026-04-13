@@ -1,6 +1,8 @@
+﻿using Shop_Cam_BE.Domain.Common;
+
 namespace Shop_Cam_BE.Domain.Entities;
 
-public class Product
+public class Product : IAuditableSoftDeletable
 {
     public Guid ProductId { get; set; }
     public string Name { get; set; } = default!;
@@ -20,5 +22,10 @@ public class Product
     public ProductCategory? Category { get; set; }
 
     public ICollection<ProductReview> Reviews { get; set; } = new List<ProductReview>();
-}
 
+    public DateTimeOffset CreatedTime { get; set; }
+    public Guid? CreatedByUserId { get; set; }
+    public DateTimeOffset UpdatedTime { get; set; }
+    public Guid? UpdatedByUserId { get; set; }
+    public bool IsActive { get; set; } = true;
+}
